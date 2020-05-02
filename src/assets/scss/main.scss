@@ -4,17 +4,22 @@
 @import "utils/fonts";
 @import "utils/reset";
 
+
+
 html {
   line-height: $mainLineHeight;
   font-size: $mainFontSize;
   color: $mainFontColor;
   height: 100%;
+
   @media screen and (max-width: $desktopWidth) {
     font-size: 16px;
   }
+
   @media screen and (max-width: $tableWidth) {
     font-size: 15px;
   }
+
   @media screen and (max-width: $phoneWidth) {
     font-size: 14px;
   }
@@ -60,12 +65,15 @@ section,
 .section {
   position: relative;
   padding: 40px 0;
+
   @media screen and (max-width: $smDesktopWidth) {
     padding: 36px 0;
   }
+
   @media screen and (max-width: $tableWidth) {
     padding: 28px 0;
   }
+
   @media screen and (max-width: $phoneWidth) {
     padding: 20px 0;
   }
@@ -91,12 +99,15 @@ section,
   position: relative;
   margin: 0 auto;
   max-width: $desktopWidth;
+
   @media screen and (max-width: $smDesktopWidth) {
     max-width: $tableWidth;
   }
+
   @media screen and (max-width: $tableWidth) {
     max-width: $phoneWidth;
   }
+
   @media screen and (max-width: $phoneWidth) {
     max-width: $smPhoneWidth;
   }
@@ -104,3 +115,4 @@ section,
 
 // Modules:
 // example: @import "modules/my-module.scss";
+@import "modules/test.scss";

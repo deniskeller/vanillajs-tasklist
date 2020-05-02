@@ -6,7 +6,6 @@ const fs = require("fs");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const { VueLoaderPlugin } = require("vue-loader");
 
 // Main const. Feel free to change it
 const PATHS = {
@@ -48,22 +47,11 @@ module.exports = {
     }
   },
   module: {
-    rules: [
-      {
+    rules: [{
         // JavaScript
         test: /\.js$/,
         loader: "babel-loader",
         exclude: "/node_modules/"
-      },
-      {
-        // Vue
-        test: /\.vue$/,
-        loader: "vue-loader",
-        options: {
-          loader: {
-            scss: "vue-style-loader!css-loader!sass-loader"
-          }
-        }
       },
       {
         // Fonts
@@ -89,18 +77,24 @@ module.exports = {
           MiniCssExtractPlugin.loader,
           {
             loader: "css-loader",
-            options: { sourceMap: true }
+            options: {
+              sourceMap: true
+            }
           },
           {
             loader: "postcss-loader",
             options: {
               sourceMap: true,
-              config: { path: `./postcss.config.js` }
+              config: {
+                path: `./postcss.config.js`
+              }
             }
           },
           {
             loader: "sass-loader",
-            options: { sourceMap: true }
+            options: {
+              sourceMap: true
+            }
           }
         ]
       },
@@ -112,13 +106,17 @@ module.exports = {
           MiniCssExtractPlugin.loader,
           {
             loader: "css-loader",
-            options: { sourceMap: true }
+            options: {
+              sourceMap: true
+            }
           },
           {
             loader: "postcss-loader",
             options: {
               sourceMap: true,
-              config: { path: `./postcss.config.js` }
+              config: {
+                path: `./postcss.config.js`
+              }
             }
           }
         ]
@@ -128,33 +126,32 @@ module.exports = {
   resolve: {
     alias: {
       "~": PATHS.src,
-      vue$: "vue/dist/vue.js"
     }
   },
   plugins: [
-    new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
       filename: `${PATHS.assets}css/[name].[contenthash].css`
     }),
-    new CopyWebpackPlugin([
-      { from: `${PATHS.src}/${PATHS.assets}img`, to: `${PATHS.assets}img` },
-      { from: `${PATHS.src}/${PATHS.assets}fonts`, to: `${PATHS.assets}fonts` },
-      { from: `${PATHS.src}/static`, to: "" }
+    new CopyWebpackPlugin([{
+        from: `${PATHS.src}/${PATHS.assets}img`,
+        to: `${PATHS.assets}img`
+      },
+      {
+        from: `${PATHS.src}/${PATHS.assets}fonts`,
+        to: `${PATHS.assets}fonts`
+      },
+      {
+        from: `${PATHS.src}/static`,
+        to: ""
+      }
     ]),
 
-    /*
-      Automatic creation any html pages (Don't forget to RERUN dev server!)
-      See more:
-      https://github.com/vedees/webpack-template/blob/master/README.md#create-another-html-files
-      Best way to create pages:
-      https://github.com/vedees/webpack-template/blob/master/README.md#third-method-best
-    */
     ...PAGES.map(
       page =>
-        new HtmlWebpackPlugin({
-          template: `${PAGES_DIR}/${page}`,
-          filename: `./${page}`
-        })
+      new HtmlWebpackPlugin({
+        template: `${PAGES_DIR}/${page}`,
+        filename: `./${page}`
+      })
     )
   ]
 };
