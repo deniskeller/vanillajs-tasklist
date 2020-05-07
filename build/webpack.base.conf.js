@@ -15,7 +15,6 @@ const PATHS = {
 };
 
 // Pages const for HtmlWebpackPlugin
-// see more: https://github.com/vedees/webpack-template/blob/master/README.md#html-dir-folder
 const PAGES_DIR = PATHS.src;
 const PAGES = fs
   .readdirSync(PAGES_DIR)

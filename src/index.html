@@ -23,7 +23,6 @@
             class="task-form__text"
             id="textarea"
           ></textarea>
-          <div id="kek"></div>
         </div>
         <div class="task-form__actions">
           <button id="add-card" class="task-form__add">Add card</button>
@@ -43,19 +42,11 @@
 
       <Loader v-if="loading" />
 
-      <div class="task-list" v-if="tasks.length">
-        <TaskItem
-          v-for="(task, index) in tasks"
-          :key="task.key"
-          :text="task.text"
-          :index="index"
-          :task="task"
-        />
-      </div>
+      <div id="list" class="task-list"></div>
 
-      <div class="task-empty">У вас пока нет задач</div>
+      <!-- <div class="task-empty">У вас пока нет задач</div> -->
 
-      <div class="task-control" v-if="showPagination">
+      <div class="task-control">
         <router-link
           :class="{'disable': prevDisable}"
           :to="'/page/' + (pageNumber-1)"

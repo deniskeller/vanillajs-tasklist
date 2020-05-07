@@ -6,9 +6,11 @@
   @if (unitless($pixels)) {
     $pixels: $pixels * 1px;
   }
+
   @if (unitless($context)) {
     $context: $context * 1px;
   }
+
   @return $pixels / $context * 1rem;
 }
 
@@ -23,20 +25,21 @@
   ::-webkit-input-placeholder {
     @content;
   }
+
   :-moz-placeholder {
     @content;
   }
+
   ::-moz-placeholder {
     @content;
   }
+
   :-ms-input-placeholder {
     @content;
   }
 }
 
-/* Fonts Helpers:
-   Read more: https://github.com/vedees/webpack-template/blob/master/README.md#add-fonts
-   ========================================================================== */
+
 
 /*
   By default template support only modern format fonts
@@ -63,20 +66,18 @@
 // Default: For modern format fonts
 // Files Required: .woff, .woffs
 
-@mixin font-face(
-  $font-family,
+@mixin font-face($font-family,
   $file-path,
   $weight: normal,
   $style: normal,
-  $asset-pipeline: false
-) {
+  $asset-pipeline: false) {
   @font-face {
     font-family: $font-family;
     font-weight: $weight;
     font-style: $style;
 
     src: url("#{$file-path}.woff") format("woff"),
-      url("#{$file-path}.woff2") format("woff2");
+    url("#{$file-path}.woff2") format("woff2");
   }
 }
 
