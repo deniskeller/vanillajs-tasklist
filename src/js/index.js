@@ -27,7 +27,6 @@ const overflow = document.querySelector(".task-form__text-overflow");
 const sortBtn = document.querySelector(".task-form__options");
 const list = document.querySelector(".task-list");
 const todoItem = document.querySelector(".task-list__item__edit");
-
 // рендер списка задач
 window.addEventListener("load", renderList);
 
@@ -70,27 +69,38 @@ addCard.addEventListener("click", createTodo);
 //функция вывода задачи
 function renderList() {
   const todos = getTodosFromLocalStorage();
-
   const newTodo = todos.map((todo, index) => {
     return {
       ...todo,
       index: index++,
     };
   });
-
-  // отрисовка списка
-  const noTodo = newTodo.length ?
-    newTodo.map(toCard).join("") :
-    `<div class="task-empty">У вас пока нет задач</div>`;
-  const list = document.querySelector(".task-list");
-  list.innerHTML = noTodo;
+  // console.log(newTodo);
 
   // сортировка задач
-  sortBtn.addEventListener("click", () => {
-    newTodo.reverse();
-    console.log(newTodo);
-    // return todos;
-  });
+  let listType = false;
+  function foo() {
+    listType = !listType;
+    let newType = listType;
+    return newType;
+  }
+
+  sortBtn.onclick = function () {
+    foo();
+  };
+  listType = foo();
+
+  // отрисовка списка
+  let noTodo;
+  if (listType === true && newTodo.length) {
+    noTodo = newTodo.map(getContent).reverse().join("");
+  } else if (newTodo.length) {
+    noTodo = newTodo.map(getContent).join("");
+  } else {
+    noTodo = `<div class="task-empty">У вас пока нет задач</div>`;
+  }
+  const list = document.querySelector(".task-list");
+  list.innerHTML = noTodo;
 
   // присвоение индекса элементам
   const taskItem = document.querySelectorAll(".task-list__item");
@@ -101,11 +111,6 @@ function renderList() {
 
 function revomeTodo(id) {
   db.collection("todos").doc(id).delete();
-}
-
-function reverse(arr) {
-  arr.reverse();
-  console.log("kek");
 }
 
 function addToLocalStorage(todo) {
@@ -119,13 +124,13 @@ function getTodosFromLocalStorage() {
   return JSON.parse(localStorage.getItem("todos") || "[]");
 }
 
-function toCard(todo) {
+function getContent(todo) {
   return `<div class="task-list__item" :class="{'active': is_active}">
   <span :class="{'task-list__item--done': done}">${todo.index + 1}) ${
     todo.text
   }</span>
 
-  <div class="task-list__item__edit" >
+  <div class="task-list__item__edit">
     <svg
       class="edit"
       xmlns="http://www.w3.org/2000/svg"
