@@ -75,32 +75,22 @@ function renderList() {
       index: index++,
     };
   });
-  // console.log(newTodo);
 
   // сортировка задач
-  let listType = false;
-  function foo() {
-    listType = !listType;
-    let newType = listType;
-    return newType;
+  function sort() {
+    newTodo.reverse();
+    displayTodos();
   }
+  sortBtn.addEventListener("click", sort);
 
-  sortBtn.onclick = function () {
-    foo();
-  };
-  listType = foo();
-
+  displayTodos();
   // отрисовка списка
-  let noTodo;
-  if (listType === true && newTodo.length) {
-    noTodo = newTodo.map(getContent).reverse().join("");
-  } else if (newTodo.length) {
-    noTodo = newTodo.map(getContent).join("");
-  } else {
-    noTodo = `<div class="task-empty">У вас пока нет задач</div>`;
+  function displayTodos() {
+    const noTodo = newTodo.length
+      ? newTodo.map(getContent).join("")
+      : `<div class="task-empty">У вас пока нет задач</div>`;
+    list.innerHTML = noTodo;
   }
-  const list = document.querySelector(".task-list");
-  list.innerHTML = noTodo;
 
   // присвоение индекса элементам
   const taskItem = document.querySelectorAll(".task-list__item");
