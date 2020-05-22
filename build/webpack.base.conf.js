@@ -47,12 +47,6 @@ module.exports = {
   },
   module: {
     rules: [{
-        // JavaScript
-        test: /\.js$/,
-        loader: "babel-loader",
-        exclude: "/node_modules/"
-      },
-      {
         // Fonts
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
         loader: "file-loader",
@@ -119,7 +113,13 @@ module.exports = {
             }
           }
         ]
-      }
+      },
+      {
+        // JavaScript
+        test: /\.js$/,
+        loader: "babel-loader",
+        exclude: "/node_modules/"
+      },
     ]
   },
   resolve: {

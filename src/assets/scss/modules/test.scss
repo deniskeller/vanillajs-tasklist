@@ -225,6 +225,8 @@
     width: 20px;
     height: 20px;
     cursor: pointer;
+    background: url('/assets/img/edit.svg') no-repeat center;
+    text-align: center;
 
     svg {
       fill: #ccc;
@@ -232,6 +234,7 @@
   }
 
   &__menu {
+    // display: none;
     right: -20px;
     position: absolute;
     top: 55px;
@@ -260,6 +263,10 @@
         cursor: pointer;
       }
     }
+  }
+
+  .hidden {
+    display: none;
   }
 }
 

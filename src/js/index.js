@@ -26,13 +26,13 @@ const deleteValue = document.querySelector(".task-form__delete");
 const overflow = document.querySelector(".task-form__text-overflow");
 const sortBtn = document.querySelector(".task-form__options");
 const list = document.querySelector(".task-list");
-const todoItem = document.querySelector(".task-list__item__edit");
-// рендер списка задач
+
+// render task list
 window.addEventListener("load", renderList);
 
-//функция добавить задачу
+//add task
 function createTodo() {
-  // валидация поля ввода
+  // textarea validate
   if (textarea.value == "") {
     overflow.classList.add("error");
   }
@@ -53,20 +53,18 @@ function createTodo() {
       .then(renderList);
   }
 }
-// валидация поля ввода
+// function textarea validate
 textarea.addEventListener("keyup", () => {
   if (textarea.value !== "") {
     overflow.classList.remove("error");
   }
 });
-// очистка поля ввода
+// clear textarea
 deleteValue.addEventListener("click", () => {
   textarea.value = "";
 });
-
 addCard.addEventListener("click", createTodo);
-
-//функция вывода задачи
+//function render task list
 function renderList() {
   const todos = getTodosFromLocalStorage();
   const newTodo = todos.map((todo, index) => {
@@ -75,38 +73,30 @@ function renderList() {
       index: index++,
     };
   });
-
-  // сортировка задач
+  // sorting task
   function sort() {
     newTodo.reverse();
     displayTodos();
   }
   sortBtn.addEventListener("click", sort);
-
   displayTodos();
-  // отрисовка списка
+
   function displayTodos() {
     const noTodo = newTodo.length
       ? newTodo.map(getContent).join("")
       : `<div class="task-empty">У вас пока нет задач</div>`;
     list.innerHTML = noTodo;
   }
-
-  // присвоение индекса элементам
-  const taskItem = document.querySelectorAll(".task-list__item");
-  taskItem.forEach((elem, index) => {
+  // index assignment to elements
+  const taskItems = document.querySelectorAll(".task-list__item");
+  taskItems.forEach((elem, index) => {
     elem.setAttribute("userid", index);
   });
-}
-
-function revomeTodo(id) {
-  db.collection("todos").doc(id).delete();
 }
 
 function addToLocalStorage(todo) {
   const all = getTodosFromLocalStorage();
   all.push(todo);
-
   localStorage.setItem("todos", JSON.stringify(all));
 }
 
@@ -114,59 +104,48 @@ function getTodosFromLocalStorage() {
   return JSON.parse(localStorage.getItem("todos") || "[]");
 }
 
-function getContent(todo) {
-  return `<div class="task-list__item" :class="{'active': is_active}">
-  <span :class="{'task-list__item--done': done}">${todo.index + 1}) ${
-    todo.text
-  }</span>
+function deleteFromLocalStorage(id) {
+  const todos = JSON.parse(localStorage.getItem("todos"));
+  var newTodos = todos.filter((item) => item.id != id);
+  localStorage.setItem("todos", JSON.stringify(newTodos));
+}
 
-  <div class="task-list__item__edit">
-    <svg
-      class="edit"
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-      />
-      <path d="M0 0h24v24H0z" fill="none" />
-    </svg>
-  </div>  
+function getContent(todo) {
+  return `<div class="task-list__item">
+  <span>${todo.index + 1}) ${todo.text}</span>
+  <div class="task-list__item__edit" data-toggle-id="${todo.id}">
+    
+  </div>
+  <div class="task-list__item__menu" id="${todo.id}" hidden>
+      <div class="task-list__item__menu-item" id="done-task">Выполнено</div>
+      <div class="task-list__item__menu-item" id="edit-task">Редактировать</div>
+      <div class="task-list__item__menu-item" id="delete-task">Удалить</div>
+    </div>  
 </div>`;
 }
 
-{
-  /* <div class="task-list__item__menu" id="menu">
-        <div class="task-list__item__menu-item" >Выполнено</div>
-        <div class="task-list__item__menu-item" >Редактировать</div>
-        <div class="task-list__item__menu-item" id="delete" >Удалить</div>
-      </div>  */
-}
+// open menu target item
+document.addEventListener("click", function (event) {
+  let target = event.target;
+  let id = target.dataset.toggleId;
+  const btnTodoMenu = target.closest(".task-list__item__edit");
+  const menu = btnTodoMenu.nextElementSibling;
+  if (btnTodoMenu) {
+    menu.hidden = !menu.hidden;
+  }
 
-// function deleteItem(id) {
-//   list.addEventListener("click", (e) => {
-//     // e.stopPropagation();
+  console.log(menu);
 
-//     db.collection("todos")
-//       .doc(id)
-//       .delete()
-//       .then(function () {
-//         todos.filter((todo) => {
-//           if (todo.id !== id) {
-//             return todo;
-//           }
-//         });
-//       })
-//       .then(function () {
-//         const userID = e.target.getAttribute("userid");
-//         console.log(userID);
-//         if (userID == id) {
-//           console.log("lol");
-//           // todoItem.remove();
-//         }
-//       });
-//   });
+  // deleteTask(id);
+});
+
+// const btnDeleteTask = document.getElementById("delete-task");
+// btnDeleteTask.addEventListener("click", deleteTask(retId));
+
+// function deleteTask(id) {
+//   db.collection("todos")
+//     .doc(id)
+//     .delete()
+//     .then(deleteFromLocalStorage(id))
+//     .then(renderList);
 // }
-// document.addEventListener("click", (e) => console.log(e.target.id));
