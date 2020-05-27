@@ -29,7 +29,6 @@ const list = document.querySelector(".task-list");
 
 // render task list
 window.addEventListener("load", renderList);
-
 //add task
 function createTodo() {
   // textarea validate
@@ -73,6 +72,7 @@ function renderList() {
       index: index++,
     };
   });
+
   // sorting task
   function sort() {
     newTodo.reverse();
@@ -82,16 +82,63 @@ function renderList() {
   displayTodos();
 
   function displayTodos() {
-    const noTodo = newTodo.length
-      ? newTodo.map(getContent).join("")
-      : `<div class="task-empty">У вас пока нет задач</div>`;
+    const noTodo = newTodo.length ?
+      newTodo.map(getContent).join("") :
+      `<div class="task-empty">У вас пока нет задач</div>`;
     list.innerHTML = noTodo;
+    console.log(newTodo);
+    try {
+      newTodo.forEach(todo => {
+        done(todo)
+      })
+      // delete task
+      const btnDeleteTask = document.querySelectorAll(".delete-task");
+      btnDeleteTask.forEach((item) => {
+        item.addEventListener("click", (e) => {
+          let target = e.target;
+          let id = target.id;
+          deleteTask(id);
+        });
+      });
+      // done task
+      const btnDoneTask = document.querySelectorAll(".done-task");
+      btnDoneTask.forEach((item) => {
+        item.addEventListener("click", (e) => {
+          let target = e.target;
+          let id = target.id;
+          const todo = newTodo.filter((todo) => todo.id == id)[0];
+          doneTask(todo);
+        });
+      });
+
+      for (
+        let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      ) {
+        document
+          .querySelectorAll(".task-list__item__edit")[i].addEventListener("click", () => {
+            document
+              .querySelectorAll(".task-list__item__menu")[i].classList.toggle("hide");
+            document
+              .querySelectorAll(".task-list__item")[i].classList.toggle("active");
+          });
+      }
+    } catch (e) {}
+
+    document.onclick = (e) => {
+      for (
+        let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      ) {
+        if (
+          !document.querySelectorAll(".task-list__item")[i].contains(e.target)
+        ) {
+          document
+            .querySelectorAll(".task-list__item__menu")[i].classList.add("hide");
+          document
+            .querySelectorAll(".task-list__item")[i].classList.remove("active");
+        }
+      }
+    };
   }
-  // index assignment to elements
-  const taskItems = document.querySelectorAll(".task-list__item");
-  taskItems.forEach((elem, index) => {
-    elem.setAttribute("userid", index);
-  });
 }
 
 function addToLocalStorage(todo) {
@@ -106,46 +153,71 @@ function getTodosFromLocalStorage() {
 
 function deleteFromLocalStorage(id) {
   const todos = JSON.parse(localStorage.getItem("todos"));
-  var newTodos = todos.filter((item) => item.id != id);
+  let newTodos = todos.filter((item) => item.id != id);
   localStorage.setItem("todos", JSON.stringify(newTodos));
 }
 
+function updateToLocalStorage(todo) {
+  const todos = JSON.parse(localStorage.getItem("todos"));
+  todos.forEach((item) => {
+    if (item.id === todo.id) {
+      item.done = !item.done;
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+  });
+}
+
 function getContent(todo) {
-  return `<div class="task-list__item">
+  return `<div class="task-list__item" id="${todo.id}">
   <span>${todo.index + 1}) ${todo.text}</span>
-  <div class="task-list__item__edit" data-toggle-id="${todo.id}">
-    
+  <div class="task-list__item__edit">
+  
   </div>
-  <div class="task-list__item__menu" id="${todo.id}" hidden>
-      <div class="task-list__item__menu-item" id="done-task">Выполнено</div>
-      <div class="task-list__item__menu-item" id="edit-task">Редактировать</div>
-      <div class="task-list__item__menu-item" id="delete-task">Удалить</div>
+  <div class="task-list__item__menu hide">
+      <div class="task-list__item__menu-item done-task" id="${
+        todo.id
+      }">Выполнено</div>
+      <div class="task-list__item__menu-item edit-task" id="${
+        todo.id
+      }">Редактировать</div>
+      <div class="task-list__item__menu-item delete-task"  id="${
+        todo.id
+      }">Удалить</div>
     </div>  
 </div>`;
 }
 
-// open menu target item
-document.addEventListener("click", function (event) {
-  let target = event.target;
-  let id = target.dataset.toggleId;
-  const btnTodoMenu = target.closest(".task-list__item__edit");
-  const menu = btnTodoMenu.nextElementSibling;
-  if (btnTodoMenu) {
-    menu.hidden = !menu.hidden;
+function deleteTask(id) {
+  db.collection("todos")
+    .doc(id)
+    .delete()
+    .then(deleteFromLocalStorage(id))
+    .then(renderList);
+}
+
+function doneTask(todo) {
+  todo.done = !todo.done;
+  db.collection("todos")
+    .doc(todo.id)
+    .update({
+      done: todo.done,
+    })
+    .then(updateToLocalStorage(todo))
+    .then(done(todo));
+}
+
+function done(todo) {
+  if (todo.done === true) {
+    document.querySelectorAll(".task-list__item").forEach((item) => {
+      if (item.id == todo.id) {
+        item.classList.add("task-list__item--done");
+      }
+    });
+  } else {
+    document.querySelectorAll(".task-list__item").forEach((item) => {
+      if (item.id == todo.id) {
+        item.classList.remove("task-list__item--done");
+      }
+    });
   }
-
-  console.log(menu);
-
-  // deleteTask(id);
-});
-
-// const btnDeleteTask = document.getElementById("delete-task");
-// btnDeleteTask.addEventListener("click", deleteTask(retId));
-
-// function deleteTask(id) {
-//   db.collection("todos")
-//     .doc(id)
-//     .delete()
-//     .then(deleteFromLocalStorage(id))
-//     .then(renderList);
-// }
+};

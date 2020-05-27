@@ -265,9 +265,7 @@
     }
   }
 
-  .hidden {
-    display: none;
-  }
+
 }
 
 .active {
@@ -284,4 +282,8 @@
 
 .task-list__item--done {
   text-decoration: line-through;
+}
+
+.hide {
+  display: none;
 }
