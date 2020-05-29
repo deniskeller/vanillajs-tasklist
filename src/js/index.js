@@ -82,15 +82,15 @@ function renderList() {
   displayTodos();
 
   function displayTodos() {
-    const noTodo = newTodo.length ?
-      newTodo.map(getContent).join("") :
-      `<div class="task-empty">У вас пока нет задач</div>`;
+    const noTodo = newTodo.length
+      ? newTodo.map(getContent).join("")
+      : `<div class="task-empty">У вас пока нет задач</div>`;
     list.innerHTML = noTodo;
     console.log(newTodo);
     try {
-      newTodo.forEach(todo => {
-        done(todo)
-      })
+      newTodo.forEach((todo) => {
+        done(todo);
+      });
       // delete task
       const btnDeleteTask = document.querySelectorAll(".delete-task");
       btnDeleteTask.forEach((item) => {
@@ -112,29 +112,38 @@ function renderList() {
       });
 
       for (
-        let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+        let i = 0;
+        i < document.querySelectorAll(".task-list__item").length;
+        i++
       ) {
         document
-          .querySelectorAll(".task-list__item__edit")[i].addEventListener("click", () => {
+          .querySelectorAll(".task-list__item__edit")
+          [i].addEventListener("click", () => {
             document
-              .querySelectorAll(".task-list__item__menu")[i].classList.toggle("hide");
+              .querySelectorAll(".task-list__item__menu")
+              [i].classList.toggle("hide");
             document
-              .querySelectorAll(".task-list__item")[i].classList.toggle("active");
+              .querySelectorAll(".task-list__item")
+              [i].classList.toggle("active");
           });
       }
     } catch (e) {}
 
     document.onclick = (e) => {
       for (
-        let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+        let i = 0;
+        i < document.querySelectorAll(".task-list__item").length;
+        i++
       ) {
         if (
           !document.querySelectorAll(".task-list__item")[i].contains(e.target)
         ) {
           document
-            .querySelectorAll(".task-list__item__menu")[i].classList.add("hide");
+            .querySelectorAll(".task-list__item__menu")
+            [i].classList.add("hide");
           document
-            .querySelectorAll(".task-list__item")[i].classList.remove("active");
+            .querySelectorAll(".task-list__item")
+            [i].classList.remove("active");
         }
       }
     };
@@ -220,4 +229,4 @@ function done(todo) {
       }
     });
   }
-};
+}
