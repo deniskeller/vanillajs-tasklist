@@ -1,15 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Todolist</title>
-  </head>
-  <body>
-    <div id="root">
-      <div class="task-content">
-        <div class="task-header">
+import {
+  Page
+} from "../core/Page";
+import {
+  $
+} from "../core/dome";
+export class TodolistPage extends Page {
+
+  getRoot() {
+    return $.create('div', 'task-content').html(`
+      <div class="task-header">
           <div class="task-header__title">Задачи</div>
           <div class="task-header__options">
             <span>&bull;&bull;&bull;</span>
@@ -75,7 +74,6 @@
             </svg>
           </router-link>
         </div>
-      </div>
-    </div>
-  </body>
-</html>
+    `)
+  }
+}
