@@ -1,5 +1,4 @@
 // Main js file
-// import { TodoList } from "./todo";
 
 import {
   HomePageTemplate
@@ -7,6 +6,9 @@ import {
 import {
   EditTaskTemplate
 } from "./EditTaskTemplate";
+import {
+  Loader
+} from "./Loader";
 
 import * as firebase from "firebase/app";
 import "firebase/storage";
@@ -39,7 +41,6 @@ let nextBtn = document.querySelector(".task-control__next-btn");
 
 const editRegExp = /\/edit\/([0-9]*)/;
 const pageRegExp = /\/page\/([0-9]*)/;
-
 
 //routing check
 routes();
@@ -91,6 +92,7 @@ deleteValue.addEventListener("click", () => {
 });
 addCard.addEventListener("click", createTodo);
 //function render task list
+
 function renderList(pageNumber) {
   document.body.innerHTML = HomePageTemplate;
   textarea = document.querySelector("#textarea");
@@ -105,49 +107,36 @@ function renderList(pageNumber) {
   nextBtn.addEventListener("click", goNextPage);
   prevBtn.addEventListener("click", goPreviousPage);
 
-  if (pageNumber * 10 <= getTodosFromLocalStorage().length) {
-    const todos = getTodosFromLocalStorage();
-    const firstTodo = pageNumber * 10 - 10;
-    const lastTodo = pageNumber * 10;
-    const pageTodos = todos.slice(firstTodo, lastTodo);
-    const pageTodosIndexes = [...Array(todos.length).keys()].slice(
-      firstTodo,
-      lastTodo
-    );
 
 
-    const newTodo = pageTodos.map((todo, index) => {
-      return {
-        ...todo,
-        index: pageTodosIndexes[index],
-      };
-    });
+  const todos = getTodosFromLocalStorage();
+  const firstTodo = pageNumber * 10 - 10;
+  const lastTodo = pageNumber * 10;
+  const pageTodos = todos.slice(firstTodo, lastTodo);
+  const pageTodosIndexes = [...Array(todos.length).keys()].slice(
+    firstTodo,
+    lastTodo
+  );
 
-    function sort() {
-      newTodo.reverse();
-      displayTodos(newTodo);
-    }
-    sortBtn.addEventListener("click", sort);
+  displayNavigationBtn(todos);
+  prevDisable(pageNumber);
+  nextDisable(pageNumber);
+
+  const newTodo = pageTodos.map((todo, index) => {
+    return {
+      ...todo,
+      index: pageTodosIndexes[index],
+    };
+  });
+
+  function sort() {
+    newTodo.reverse();
     displayTodos(newTodo);
+  }
+  sortBtn.addEventListener("click", sort);
+  displayTodos(newTodo);
 
-  } else {
-    const todos = getTodosFromLocalStorage();
-    const firstTodo = pageNumber * 10 - 10;
-    const pageTodos = todos.slice(firstTodo);
-    const pageTodosIndexes = [...Array(todos.length).keys()].slice(firstTodo);
-    const newTodo = pageTodos.map((todo, index) => {
-      return {
-        ...todo,
-        index: pageTodosIndexes[index],
-      };
-    });
-
-    function sort() {
-      newTodo.reverse();
-      displayTodos(newTodo);
-    }
-    sortBtn.addEventListener("click", sort);
-
+  if (pageNumber * 10 > getTodosFromLocalStorage().length) {
     if (newTodo[0]) {
       displayTodos(newTodo);
     } else if (
@@ -156,21 +145,30 @@ function renderList(pageNumber) {
     ) {
       displayTodos(newTodo);
     } else {
-      history.pushState(null, null, "/page/1");
-      history.pushState(null, null, "/page/1");
       history.go(-1);
-      history.go(2);
     }
-    displayTodos(newTodo)
+    displayTodos(newTodo);
   }
 }
 
-
 function displayTodos(newTodo) {
-  const noTodo = newTodo.length ?
-    newTodo.map(getContent).join("") :
-    `<div class="task-empty">У вас пока нет задач</div>`;
+  // const noTodo = newTodo.length ?
+  //   newTodo.map(getContent).join("") :
+  //   `<div class="task-empty">У вас пока нет задач</div>`
+
+  // let spinner = document.querySelector('.spinner');
+  let noTodo;
+  if (newTodo.length) {
+    noTodo = newTodo.map(getContent).join("")
+  } else if (newTodo.length) {
+    noTodo = Loader
+  } else {
+    noTodo = `<div class="task-empty">У вас пока нет задач</div>`
+  }
+
   list.innerHTML = noTodo;
+
+
   for (const edit of document.querySelectorAll(".edit-task")) {
     edit.onclick = () => {
       history.pushState(null, null, `/edit/${edit.dataset.idx}`);
@@ -182,6 +180,7 @@ function displayTodos(newTodo) {
   try {
     newTodo.forEach((todo) => {
       done(todo);
+      changeNameItemMenu(todo);
     });
     // delete task
     const btnDeleteTask = document.querySelectorAll(".delete-task");
@@ -308,7 +307,24 @@ function doneTask(todo) {
       done: todo.done,
     })
     .then(updateToLocalStorage(todo))
-    .then(done(todo));
+    .then(done(todo))
+    .then(changeNameItemMenu(todo));
+}
+
+function changeNameItemMenu(todo) {
+  if (todo.done === true) {
+    document.querySelectorAll(".done-task").forEach((item) => {
+      if (item.id == todo.id) {
+        item.innerHTML = "Не выполнено";
+      }
+    });
+  } else {
+    document.querySelectorAll(".done-task").forEach((item) => {
+      if (item.id == todo.id) {
+        item.innerHTML = "Выполнено";
+      }
+    });
+  }
 }
 
 function done(todo) {
@@ -327,7 +343,6 @@ function done(todo) {
   }
 }
 
-
 function goNextPage() {
   console.log(Number(pageRegExp.exec(window.location.pathname)[1]) + 1);
   history.pushState(
@@ -344,74 +359,76 @@ function goNextPage() {
   history.go(2);
 }
 
+function prevDisable(pageNumber) {
+  if (pageNumber <= 1) {
+    prevBtn.style.pointerEvents = 'none';
+  }
+}
+
+function nextDisable(pageNumber) {
+  const taskLength = getTodosFromLocalStorage().length;
+  if (taskLength <= pageNumber * 10) {
+    nextBtn.style.pointerEvents = 'none';
+  }
+}
+
 function goPreviousPage() {
   const currentPageNumber = Number(
     pageRegExp.exec(window.location.pathname)[1]
   );
-  console.log('currentPageNumber: ', currentPageNumber);
+  console.log("currentPageNumber: ", currentPageNumber);
   history.pushState(null, null, `/page/${currentPageNumber - 1}`);
   history.pushState(null, null, `/page/${currentPageNumber - 1}`);
   history.go(-1);
   history.go(2);
 }
 
-//Функция сравнения роутов
+function displayNavigationBtn(todos) {
+  const navbarPagination = document.querySelector('.task-control');
+  if (todos.length > 10) {
+    navbarPagination.style.display = 'block';
+  }
+}
+
+//routing
 function routes() {
   if (editRegExp.exec(window.location.pathname)) {
     if (Number(editRegExp.exec(window.location.pathname)[1]) !== 0) {
-      // Если при помощи выражения мы что-то получаем, то мы можем воспользоваться номером задачи
-      // Ставим шаблон страницы редактирования задачи
       document.body.innerHTML = EditTaskTemplate;
-      // Получаем textarea из шаблона страницы редактирования задачи
-      const textareaEdit = document.getElementsByClassName(
-        "task-edit__text"
-      )[0];
-      // Ставим в нём значение нужной задачи (мы получили её номер из url)
+
+      const textareaEdit = document.querySelector(".task-edit__text");
       textareaEdit.value = getTodosFromLocalStorage()[
         Number(editRegExp.exec(window.location.pathname)[1]) - 1
       ].text;
-      console.log(
-        getTodosFromLocalStorage()[
-          Number(editRegExp.exec(window.location.pathname)[1]) - 1
-        ]
-      );
-      console.log(editRegExp.exec(window.location.pathname)[1]);
-      // Получаем кнопку сохранения нового текста
-      const saveBtn = document.getElementsByClassName("btn-save")[0];
-      // Ставим событие на кнопку сохранения нового текста
+
+      const saveBtn = document.querySelector(".btn-save");
       saveBtn.onclick = () => {
-        // Получаем todo с нужным номером из localStorage
         const todo = getTodosFromLocalStorage()[
           Number(editRegExp.exec(window.location.pathname)[1]) - 1
         ];
-        // Получаем новый текст задачи
+
         const newText = textareaEdit.value;
-        // Запускаем функцию сохранения нужного todo в localStorage в localStorage при помощи самого todo и нового текста
+
         editToLocalStorage(todo, newText);
-        // Изменяем данный todo в firebase
+
         db.collection("todos")
           .doc(todo.id)
-          // Ставим на место этого todo наш изменённый todo
           .set(
             getTodosFromLocalStorage()[
               Number(editRegExp.exec(window.location.pathname)[1]) - 1
             ]
           )
-          // Возвращаемся на один url назад и переписываем основные переменные
           .then(() => {
             history.go(-1);
           })
-          // Все переменные переписаны и можно отрендерить список задач
           .then((renderList) => {
             if (pageRegExp.exec(window.location.pathname)) {
               renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
             }
           });
       };
-      // Получаем кнопку "назад"
-      const backBtn = document.getElementsByClassName("btn-back")[0];
-      // Устанавливаем событие клика на кнопку "назад",
-      // В ходе которого возвращаемся назад, ставим шаблон главной страницы, получаем элементы страницы и рендерим список задач
+      const backBtn = document.querySelector(".btn-back");
+
       backBtn.onclick = () => {
         history.go(-1);
         if (pageRegExp.exec(window.location.pathname)) {
@@ -422,18 +439,12 @@ function routes() {
       history.pushState(null, null, "/page/1");
       renderList(1);
     }
-  } /*Если выражение что-то выдаёт, то мы можем воспользоваться номером страницы*/
-  else if (
-    pageRegExp.exec(window.location.pathname)
-  ) {
+  } else if (pageRegExp.exec(window.location.pathname)) {
     if (Number(pageRegExp.exec(window.location.pathname)[1]) !== 0) {
-      // Расчитываем номер максимальной страницы
       const maxPageNumber =
         parseInt(getTodosFromLocalStorage().length / 10) + 1;
-      // Получаем номер страницы из url
       const pageNumber = Number(pageRegExp.exec(window.location.pathname)[1]);
       if (pageNumber <= maxPageNumber) {
-        // Проверка хватит ли todo чтобы они отрендерились на этой странице
         renderList(pageNumber);
       } else {
         history.replaceState(null, null, `/page/${maxPageNumber}`);
