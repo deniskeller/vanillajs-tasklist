@@ -1,14 +1,8 @@
 // Main js file
 
-import {
-  HomePageTemplate
-} from "./HomePageTemplate";
-import {
-  EditTaskTemplate
-} from "./EditTaskTemplate";
-import {
-  Loader
-} from "./Loader";
+import { HomePageTemplate } from "./HomePageTemplate";
+import { EditTaskTemplate } from "./EditTaskTemplate";
+import { Loader } from "./Loader";
 
 import * as firebase from "firebase/app";
 import "firebase/storage";
@@ -38,11 +32,9 @@ let sortBtn = document.querySelector(".task-form__options");
 let list = document.querySelector(".task-list");
 let prevBtn = document.querySelector(".task-control__prev-btn");
 let nextBtn = document.querySelector(".task-control__next-btn");
-let spinner = document.querySelector(".spinner");
 
 const editRegExp = /\/edit\/([0-9]*)/;
 const pageRegExp = /\/page\/([0-9]*)/;
-
 //routing check
 routes();
 // Event fires when URL changes
@@ -54,14 +46,8 @@ window.addEventListener("popstate", function () {
 
 // list.beforeend(spinner)
 window.addEventListener("load", () => {
-  if (getTodosFromLocalStorage().length > 0) {
-    try {
-      list.insertAdjacentHTML('beforeend', spinner);
-      routes();
-      // spinner.style.display = 'block';
-      // list.innerHTML = ''
-    } catch (error) {}
-  }
+  routes();
+  updateTodos();
 });
 //add task
 function createTodo() {
@@ -102,7 +88,6 @@ deleteValue.addEventListener("click", () => {
 });
 addCard.addEventListener("click", createTodo);
 //function render task list
-
 function renderList(pageNumber) {
   document.body.innerHTML = HomePageTemplate;
   textarea = document.querySelector("#textarea");
@@ -116,7 +101,6 @@ function renderList(pageNumber) {
   addCard.addEventListener("click", createTodo);
   nextBtn.addEventListener("click", goNextPage);
   prevBtn.addEventListener("click", goPreviousPage);
-
   const todos = getTodosFromLocalStorage();
   const firstTodo = pageNumber * 10 - 10;
   const lastTodo = pageNumber * 10;
@@ -138,7 +122,21 @@ function renderList(pageNumber) {
   });
 
   function sort() {
-    newTodo.reverse();
+    sortToLocalStorage();
+    const todos = getTodosFromLocalStorage();
+    const firstTodo = pageNumber * 10 - 10;
+    const lastTodo = pageNumber * 10;
+    const pageTodos = todos.slice(firstTodo, lastTodo);
+    const pageTodosIndexes = [...Array(todos.length).keys()].slice(
+      firstTodo,
+      lastTodo
+    );
+    const newTodo = pageTodos.map((todo, index) => {
+      return {
+        ...todo,
+        index: pageTodosIndexes[index],
+      };
+    });
     displayTodos(newTodo);
   }
   sortBtn.addEventListener("click", sort);
@@ -159,18 +157,12 @@ function renderList(pageNumber) {
   }
 }
 
-
 function displayTodos(newTodo) {
-
   try {
-    // spinner.style.display = 'block';
-    // console.log(spinner);
-
-    const noTodo = newTodo.length ?
-      newTodo.map(getContent).join("") :
-      `<div class="task-empty">У вас пока нет задач</div>`
+    const noTodo = newTodo.length
+      ? newTodo.map(getContent).join("")
+      : `<div class="task-empty">У вас пока нет задач</div>`;
     list.innerHTML = noTodo;
-
 
     for (const edit of document.querySelectorAll(".edit-task")) {
       edit.onclick = () => {
@@ -206,29 +198,38 @@ function displayTodos(newTodo) {
     });
 
     for (
-      let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      let i = 0;
+      i < document.querySelectorAll(".task-list__item").length;
+      i++
     ) {
       document
-        .querySelectorAll(".task-list__item__edit")[i].addEventListener("click", () => {
+        .querySelectorAll(".task-list__item__edit")
+        [i].addEventListener("click", () => {
           document
-            .querySelectorAll(".task-list__item__menu")[i].classList.toggle("hide");
+            .querySelectorAll(".task-list__item__menu")
+            [i].classList.toggle("hide");
           document
-            .querySelectorAll(".task-list__item")[i].classList.toggle("active");
+            .querySelectorAll(".task-list__item")
+            [i].classList.toggle("active");
         });
     }
   } catch (e) {}
 
   document.onclick = (e) => {
     for (
-      let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      let i = 0;
+      i < document.querySelectorAll(".task-list__item").length;
+      i++
     ) {
       if (
         !document.querySelectorAll(".task-list__item")[i].contains(e.target)
       ) {
         document
-          .querySelectorAll(".task-list__item__menu")[i].classList.add("hide");
+          .querySelectorAll(".task-list__item__menu")
+          [i].classList.add("hide");
         document
-          .querySelectorAll(".task-list__item")[i].classList.remove("active");
+          .querySelectorAll(".task-list__item")
+          [i].classList.remove("active");
       }
     }
   };
@@ -274,7 +275,7 @@ function getContent(todo) {
   return `<div class="task-list__item" id="${todo.id}">
   <span>${todo.index + 1}) ${todo.text}</span>
   <div class="task-list__item__edit">
-  
+
   </div>
   <div class="task-list__item__menu hide">
       <div class="task-list__item__menu-item done-task" id="${
@@ -286,7 +287,7 @@ function getContent(todo) {
       <div class="task-list__item__menu-item delete-task"  id="${
         todo.id
       }">Удалить</div>
-    </div>  
+    </div>
 </div>`;
 }
 
@@ -311,7 +312,39 @@ function doneTask(todo) {
     })
     .then(updateToLocalStorage(todo))
     .then(done(todo))
-    .then(changeNameItemMenu(todo));
+    .then(changeNameItemMenu(todo))
+    .then(() => {
+      if (pageRegExp.exec(window.location.pathname)) {
+        renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
+      }
+    });
+}
+
+function updateTodos() {
+  toggleLoader();
+  db.collection("todos")
+    .get()
+    .then(({ docs }) => {
+      let todos = [];
+      docs.forEach((el) => {
+        todos.push(el.data());
+      });
+      localStorage.setItem("todos", JSON.stringify(todos));
+    })
+    .then(() => {
+      if (pageRegExp.exec(window.location.pathname)) {
+        renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
+      }
+    });
+}
+
+function sortToLocalStorage() {
+  const todos = getTodosFromLocalStorage();
+  localStorage.setItem("todos", JSON.stringify(todos.reverse()));
+}
+
+function toggleLoader() {
+  list.innerHTML = Loader;
 }
 
 function changeNameItemMenu(todo) {
@@ -413,7 +446,6 @@ function routes() {
         const newText = textareaEdit.value;
 
         editToLocalStorage(todo, newText);
-
         db.collection("todos")
           .doc(todo.id)
           .set(
