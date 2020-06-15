@@ -33,9 +33,11 @@ export const HomePageTemplate =
   </div>
 </div>
 
-<!-- <Loader v-if="loading" /> -->
 
-<div id="list" class="task-list"></div>
+
+<div id="list" class="task-list">
+<div class="spinner"></div>
+</div>
 
 <div class="task-control">
   <div

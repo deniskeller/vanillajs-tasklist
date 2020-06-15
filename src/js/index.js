@@ -1,12 +1,8 @@
 // Main js file
-// import { TodoList } from "./todo";
 
-import {
-  HomePageTemplate
-} from "./HomePageTemplate";
-import {
-  EditTaskTemplate
-} from "./EditTaskTemplate";
+import { HomePageTemplate } from "./HomePageTemplate";
+import { EditTaskTemplate } from "./EditTaskTemplate";
+import { Loader } from "./Loader";
 
 import * as firebase from "firebase/app";
 import "firebase/storage";
@@ -39,19 +35,20 @@ let nextBtn = document.querySelector(".task-control__next-btn");
 
 const editRegExp = /\/edit\/([0-9]*)/;
 const pageRegExp = /\/page\/([0-9]*)/;
-
-
 //routing check
 routes();
 // Event fires when URL changes
 window.addEventListener("popstate", function () {
   routes();
 });
+
 // render task list or other routes
+
+// list.beforeend(spinner)
 window.addEventListener("load", () => {
   routes();
+  updateTodos();
 });
-
 //add task
 function createTodo() {
   // textarea validate
@@ -104,8 +101,28 @@ function renderList(pageNumber) {
   addCard.addEventListener("click", createTodo);
   nextBtn.addEventListener("click", goNextPage);
   prevBtn.addEventListener("click", goPreviousPage);
+  const todos = getTodosFromLocalStorage();
+  const firstTodo = pageNumber * 10 - 10;
+  const lastTodo = pageNumber * 10;
+  const pageTodos = todos.slice(firstTodo, lastTodo);
+  const pageTodosIndexes = [...Array(todos.length).keys()].slice(
+    firstTodo,
+    lastTodo
+  );
 
-  if (pageNumber * 10 <= getTodosFromLocalStorage().length) {
+  displayNavigationBtn(todos);
+  prevDisable(pageNumber);
+  nextDisable(pageNumber);
+
+  const newTodo = pageTodos.map((todo, index) => {
+    return {
+      ...todo,
+      index: pageTodosIndexes[index],
+    };
+  });
+
+  function sort() {
+    sortToLocalStorage();
     const todos = getTodosFromLocalStorage();
     const firstTodo = pageNumber * 10 - 10;
     const lastTodo = pageNumber * 10;
@@ -114,40 +131,18 @@ function renderList(pageNumber) {
       firstTodo,
       lastTodo
     );
-
-
     const newTodo = pageTodos.map((todo, index) => {
       return {
         ...todo,
         index: pageTodosIndexes[index],
       };
     });
-
-    function sort() {
-      newTodo.reverse();
-      displayTodos(newTodo);
-    }
-    sortBtn.addEventListener("click", sort);
     displayTodos(newTodo);
+  }
+  sortBtn.addEventListener("click", sort);
+  displayTodos(newTodo);
 
-  } else {
-    const todos = getTodosFromLocalStorage();
-    const firstTodo = pageNumber * 10 - 10;
-    const pageTodos = todos.slice(firstTodo);
-    const pageTodosIndexes = [...Array(todos.length).keys()].slice(firstTodo);
-    const newTodo = pageTodos.map((todo, index) => {
-      return {
-        ...todo,
-        index: pageTodosIndexes[index],
-      };
-    });
-
-    function sort() {
-      newTodo.reverse();
-      displayTodos(newTodo);
-    }
-    sortBtn.addEventListener("click", sort);
-
+  if (pageNumber * 10 > getTodosFromLocalStorage().length) {
     if (newTodo[0]) {
       displayTodos(newTodo);
     } else if (
@@ -156,32 +151,31 @@ function renderList(pageNumber) {
     ) {
       displayTodos(newTodo);
     } else {
-      history.pushState(null, null, "/page/1");
-      history.pushState(null, null, "/page/1");
       history.go(-1);
-      history.go(2);
     }
-    displayTodos(newTodo)
+    displayTodos(newTodo);
   }
 }
 
-
 function displayTodos(newTodo) {
-  const noTodo = newTodo.length ?
-    newTodo.map(getContent).join("") :
-    `<div class="task-empty">У вас пока нет задач</div>`;
-  list.innerHTML = noTodo;
-  for (const edit of document.querySelectorAll(".edit-task")) {
-    edit.onclick = () => {
-      history.pushState(null, null, `/edit/${edit.dataset.idx}`);
-      history.pushState(null, null, `/edit/${edit.dataset.idx}`);
-      history.go(-1);
-      history.go(2);
-    };
-  }
   try {
+    const noTodo = newTodo.length
+      ? newTodo.map(getContent).join("")
+      : `<div class="task-empty">У вас пока нет задач</div>`;
+    list.innerHTML = noTodo;
+
+    for (const edit of document.querySelectorAll(".edit-task")) {
+      edit.onclick = () => {
+        history.pushState(null, null, `/edit/${edit.dataset.idx}`);
+        history.pushState(null, null, `/edit/${edit.dataset.idx}`);
+        history.go(-1);
+        history.go(2);
+      };
+    }
+
     newTodo.forEach((todo) => {
       done(todo);
+      changeNameItemMenu(todo);
     });
     // delete task
     const btnDeleteTask = document.querySelectorAll(".delete-task");
@@ -204,29 +198,38 @@ function displayTodos(newTodo) {
     });
 
     for (
-      let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      let i = 0;
+      i < document.querySelectorAll(".task-list__item").length;
+      i++
     ) {
       document
-        .querySelectorAll(".task-list__item__edit")[i].addEventListener("click", () => {
+        .querySelectorAll(".task-list__item__edit")
+        [i].addEventListener("click", () => {
           document
-            .querySelectorAll(".task-list__item__menu")[i].classList.toggle("hide");
+            .querySelectorAll(".task-list__item__menu")
+            [i].classList.toggle("hide");
           document
-            .querySelectorAll(".task-list__item")[i].classList.toggle("active");
+            .querySelectorAll(".task-list__item")
+            [i].classList.toggle("active");
         });
     }
   } catch (e) {}
 
   document.onclick = (e) => {
     for (
-      let i = 0; i < document.querySelectorAll(".task-list__item").length; i++
+      let i = 0;
+      i < document.querySelectorAll(".task-list__item").length;
+      i++
     ) {
       if (
         !document.querySelectorAll(".task-list__item")[i].contains(e.target)
       ) {
         document
-          .querySelectorAll(".task-list__item__menu")[i].classList.add("hide");
+          .querySelectorAll(".task-list__item__menu")
+          [i].classList.add("hide");
         document
-          .querySelectorAll(".task-list__item")[i].classList.remove("active");
+          .querySelectorAll(".task-list__item")
+          [i].classList.remove("active");
       }
     }
   };
@@ -272,7 +275,7 @@ function getContent(todo) {
   return `<div class="task-list__item" id="${todo.id}">
   <span>${todo.index + 1}) ${todo.text}</span>
   <div class="task-list__item__edit">
-  
+
   </div>
   <div class="task-list__item__menu hide">
       <div class="task-list__item__menu-item done-task" id="${
@@ -284,7 +287,7 @@ function getContent(todo) {
       <div class="task-list__item__menu-item delete-task"  id="${
         todo.id
       }">Удалить</div>
-    </div>  
+    </div>
 </div>`;
 }
 
@@ -308,7 +311,56 @@ function doneTask(todo) {
       done: todo.done,
     })
     .then(updateToLocalStorage(todo))
-    .then(done(todo));
+    .then(done(todo))
+    .then(changeNameItemMenu(todo))
+    .then(() => {
+      if (pageRegExp.exec(window.location.pathname)) {
+        renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
+      }
+    });
+}
+
+function updateTodos() {
+  toggleLoader();
+  db.collection("todos")
+    .get()
+    .then(({ docs }) => {
+      let todos = [];
+      docs.forEach((el) => {
+        todos.push(el.data());
+      });
+      localStorage.setItem("todos", JSON.stringify(todos));
+    })
+    .then(() => {
+      if (pageRegExp.exec(window.location.pathname)) {
+        renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
+      }
+    });
+}
+
+function sortToLocalStorage() {
+  const todos = getTodosFromLocalStorage();
+  localStorage.setItem("todos", JSON.stringify(todos.reverse()));
+}
+
+function toggleLoader() {
+  list.innerHTML = Loader;
+}
+
+function changeNameItemMenu(todo) {
+  if (todo.done === true) {
+    document.querySelectorAll(".done-task").forEach((item) => {
+      if (item.id == todo.id) {
+        item.innerHTML = "Не выполнено";
+      }
+    });
+  } else {
+    document.querySelectorAll(".done-task").forEach((item) => {
+      if (item.id == todo.id) {
+        item.innerHTML = "Выполнено";
+      }
+    });
+  }
 }
 
 function done(todo) {
@@ -327,7 +379,6 @@ function done(todo) {
   }
 }
 
-
 function goNextPage() {
   console.log(Number(pageRegExp.exec(window.location.pathname)[1]) + 1);
   history.pushState(
@@ -344,74 +395,75 @@ function goNextPage() {
   history.go(2);
 }
 
+function prevDisable(pageNumber) {
+  if (pageNumber <= 1) {
+    prevBtn.style.pointerEvents = "none";
+  }
+}
+
+function nextDisable(pageNumber) {
+  const taskLength = getTodosFromLocalStorage().length;
+  if (taskLength <= pageNumber * 10) {
+    nextBtn.style.pointerEvents = "none";
+  }
+}
+
 function goPreviousPage() {
   const currentPageNumber = Number(
     pageRegExp.exec(window.location.pathname)[1]
   );
-  console.log('currentPageNumber: ', currentPageNumber);
+  console.log("currentPageNumber: ", currentPageNumber);
   history.pushState(null, null, `/page/${currentPageNumber - 1}`);
   history.pushState(null, null, `/page/${currentPageNumber - 1}`);
   history.go(-1);
   history.go(2);
 }
 
-//Функция сравнения роутов
+function displayNavigationBtn(todos) {
+  const navbarPagination = document.querySelector(".task-control");
+  if (todos.length > 10) {
+    navbarPagination.style.display = "block";
+  }
+}
+
+//routing
 function routes() {
   if (editRegExp.exec(window.location.pathname)) {
     if (Number(editRegExp.exec(window.location.pathname)[1]) !== 0) {
-      // Если при помощи выражения мы что-то получаем, то мы можем воспользоваться номером задачи
-      // Ставим шаблон страницы редактирования задачи
       document.body.innerHTML = EditTaskTemplate;
-      // Получаем textarea из шаблона страницы редактирования задачи
-      const textareaEdit = document.getElementsByClassName(
-        "task-edit__text"
-      )[0];
-      // Ставим в нём значение нужной задачи (мы получили её номер из url)
+
+      const textareaEdit = document.querySelector(".task-edit__text");
       textareaEdit.value = getTodosFromLocalStorage()[
         Number(editRegExp.exec(window.location.pathname)[1]) - 1
       ].text;
-      console.log(
-        getTodosFromLocalStorage()[
-          Number(editRegExp.exec(window.location.pathname)[1]) - 1
-        ]
-      );
-      console.log(editRegExp.exec(window.location.pathname)[1]);
-      // Получаем кнопку сохранения нового текста
-      const saveBtn = document.getElementsByClassName("btn-save")[0];
-      // Ставим событие на кнопку сохранения нового текста
+
+      const saveBtn = document.querySelector(".btn-save");
       saveBtn.onclick = () => {
-        // Получаем todo с нужным номером из localStorage
         const todo = getTodosFromLocalStorage()[
           Number(editRegExp.exec(window.location.pathname)[1]) - 1
         ];
-        // Получаем новый текст задачи
+
         const newText = textareaEdit.value;
-        // Запускаем функцию сохранения нужного todo в localStorage в localStorage при помощи самого todo и нового текста
+
         editToLocalStorage(todo, newText);
-        // Изменяем данный todo в firebase
         db.collection("todos")
           .doc(todo.id)
-          // Ставим на место этого todo наш изменённый todo
           .set(
             getTodosFromLocalStorage()[
               Number(editRegExp.exec(window.location.pathname)[1]) - 1
             ]
           )
-          // Возвращаемся на один url назад и переписываем основные переменные
           .then(() => {
             history.go(-1);
           })
-          // Все переменные переписаны и можно отрендерить список задач
           .then((renderList) => {
             if (pageRegExp.exec(window.location.pathname)) {
               renderList(Number(pageRegExp.exec(window.location.pathname)[1]));
             }
           });
       };
-      // Получаем кнопку "назад"
-      const backBtn = document.getElementsByClassName("btn-back")[0];
-      // Устанавливаем событие клика на кнопку "назад",
-      // В ходе которого возвращаемся назад, ставим шаблон главной страницы, получаем элементы страницы и рендерим список задач
+      const backBtn = document.querySelector(".btn-back");
+
       backBtn.onclick = () => {
         history.go(-1);
         if (pageRegExp.exec(window.location.pathname)) {
@@ -422,18 +474,12 @@ function routes() {
       history.pushState(null, null, "/page/1");
       renderList(1);
     }
-  } /*Если выражение что-то выдаёт, то мы можем воспользоваться номером страницы*/
-  else if (
-    pageRegExp.exec(window.location.pathname)
-  ) {
+  } else if (pageRegExp.exec(window.location.pathname)) {
     if (Number(pageRegExp.exec(window.location.pathname)[1]) !== 0) {
-      // Расчитываем номер максимальной страницы
       const maxPageNumber =
         parseInt(getTodosFromLocalStorage().length / 10) + 1;
-      // Получаем номер страницы из url
       const pageNumber = Number(pageRegExp.exec(window.location.pathname)[1]);
       if (pageNumber <= maxPageNumber) {
-        // Проверка хватит ли todo чтобы они отрендерились на этой странице
         renderList(pageNumber);
       } else {
         history.replaceState(null, null, `/page/${maxPageNumber}`);
