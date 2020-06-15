@@ -38,6 +38,7 @@ let sortBtn = document.querySelector(".task-form__options");
 let list = document.querySelector(".task-list");
 let prevBtn = document.querySelector(".task-control__prev-btn");
 let nextBtn = document.querySelector(".task-control__next-btn");
+let spinner = document.querySelector(".spinner");
 
 const editRegExp = /\/edit\/([0-9]*)/;
 const pageRegExp = /\/page\/([0-9]*)/;
@@ -48,11 +49,20 @@ routes();
 window.addEventListener("popstate", function () {
   routes();
 });
-// render task list or other routes
-window.addEventListener("load", () => {
-  routes();
-});
 
+// render task list or other routes
+
+// list.beforeend(spinner)
+window.addEventListener("load", () => {
+  if (getTodosFromLocalStorage().length > 0) {
+    try {
+      list.insertAdjacentHTML('beforeend', spinner);
+      routes();
+      // spinner.style.display = 'block';
+      // list.innerHTML = ''
+    } catch (error) {}
+  }
+});
 //add task
 function createTodo() {
   // textarea validate
@@ -107,8 +117,6 @@ function renderList(pageNumber) {
   nextBtn.addEventListener("click", goNextPage);
   prevBtn.addEventListener("click", goPreviousPage);
 
-
-
   const todos = getTodosFromLocalStorage();
   const firstTodo = pageNumber * 10 - 10;
   const lastTodo = pageNumber * 10;
@@ -151,33 +159,28 @@ function renderList(pageNumber) {
   }
 }
 
+
 function displayTodos(newTodo) {
-  // const noTodo = newTodo.length ?
-  //   newTodo.map(getContent).join("") :
-  //   `<div class="task-empty">У вас пока нет задач</div>`
 
-  // let spinner = document.querySelector('.spinner');
-  let noTodo;
-  if (newTodo.length) {
-    noTodo = newTodo.map(getContent).join("")
-  } else if (newTodo.length) {
-    noTodo = Loader
-  } else {
-    noTodo = `<div class="task-empty">У вас пока нет задач</div>`
-  }
-
-  list.innerHTML = noTodo;
-
-
-  for (const edit of document.querySelectorAll(".edit-task")) {
-    edit.onclick = () => {
-      history.pushState(null, null, `/edit/${edit.dataset.idx}`);
-      history.pushState(null, null, `/edit/${edit.dataset.idx}`);
-      history.go(-1);
-      history.go(2);
-    };
-  }
   try {
+    // spinner.style.display = 'block';
+    // console.log(spinner);
+
+    const noTodo = newTodo.length ?
+      newTodo.map(getContent).join("") :
+      `<div class="task-empty">У вас пока нет задач</div>`
+    list.innerHTML = noTodo;
+
+
+    for (const edit of document.querySelectorAll(".edit-task")) {
+      edit.onclick = () => {
+        history.pushState(null, null, `/edit/${edit.dataset.idx}`);
+        history.pushState(null, null, `/edit/${edit.dataset.idx}`);
+        history.go(-1);
+        history.go(2);
+      };
+    }
+
     newTodo.forEach((todo) => {
       done(todo);
       changeNameItemMenu(todo);
@@ -361,14 +364,14 @@ function goNextPage() {
 
 function prevDisable(pageNumber) {
   if (pageNumber <= 1) {
-    prevBtn.style.pointerEvents = 'none';
+    prevBtn.style.pointerEvents = "none";
   }
 }
 
 function nextDisable(pageNumber) {
   const taskLength = getTodosFromLocalStorage().length;
   if (taskLength <= pageNumber * 10) {
-    nextBtn.style.pointerEvents = 'none';
+    nextBtn.style.pointerEvents = "none";
   }
 }
 
@@ -384,9 +387,9 @@ function goPreviousPage() {
 }
 
 function displayNavigationBtn(todos) {
-  const navbarPagination = document.querySelector('.task-control');
+  const navbarPagination = document.querySelector(".task-control");
   if (todos.length > 10) {
-    navbarPagination.style.display = 'block';
+    navbarPagination.style.display = "block";
   }
 }
 
